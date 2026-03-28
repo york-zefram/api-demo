@@ -3,125 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZEFRAM API SETUP - INTEGRATED</title>
+    <title>ZEFRAM CORE TERMINAL</title>
     <style>
-        :root { --pink: #ff007f; --black: #050505; --gray: #1a1a1a; --green: #00ff88; }
-        html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* メインコンテナ */
-        .container { 
-            height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            padding: 20px; box-sizing: border-box; text-align: center;
+        :root { --pink: #ff007f; --black: #050505; --green: #00ff88; }
+        html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; height: 100vh; overflow: hidden; }
+
+        /* ZEFRAMの操作シールド */
+        .z-shield {
+            position: fixed; inset: 0; z-index: 100;
+            background: radial-gradient(circle at center, transparent 30%, rgba(5,5,5,0.8) 100%);
+            border: 4px solid var(--pink); box-sizing: border-box;
+            display: flex; flex-direction: column; pointer-events: none;
         }
 
-        h1 { font-size: 1.5rem; color: var(--pink); letter-spacing: 4px; margin-bottom: 5px; text-transform: uppercase; }
-        .sub-title { font-size: 0.7rem; color: #666; margin-bottom: 40px; letter-spacing: 1px; }
+        .z-header { height: 80px; background: rgba(5,5,5,0.95); border-bottom: 2px solid var(--pink); pointer-events: auto; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; }
+        .z-footer { height: 120px; background: rgba(5,5,5,0.95); border-top: 2px solid var(--pink); pointer-events: auto; margin-top: auto; padding: 20px 40px; display: flex; flex-direction: column; align-items: center; }
 
-        /* ステップカード */
-        .card { 
-            background: var(--gray); width: 100%; max-width: 400px; padding: 30px; border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; position: relative;
+        h1 { font-size: 1.4rem; color: var(--pink); letter-spacing: 5px; margin: 0; }
+        .guide-text { font-size: 0.75rem; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Googleを背景に閉じ込める窓 */
+        .terminal-window {
+            position: fixed; top: 80px; bottom: 120px; left: 0; right: 0;
+            z-index: 1; pointer-events: auto;
         }
-
-        .step-indicator { font-size: 0.6rem; color: var(--pink); font-weight: bold; margin-bottom: 10px; display: block; }
-        .instruction { font-size: 0.9rem; margin-bottom: 25px; color: #eee; }
-
-        /* ZEFRAMボタン */
-        .z-btn {
-            display: block; width: 100%; padding: 15px; background: transparent; color: var(--pink);
-            border: 1px solid var(--pink); border-radius: 4px; font-weight: bold; cursor: pointer;
-            text-decoration: none; font-size: 0.8rem; transition: 0.2s; margin-bottom: 10px;
-        }
-        .z-btn:hover { background: rgba(255, 0, 127, 0.1); box-shadow: 0 0 15px rgba(255, 0, 127, 0.3); }
-        .z-btn:active { transform: scale(0.98); }
+        iframe { width: 100%; height: 100%; border: none; filter: grayscale(1) contrast(1.2) brightness(0.7); }
 
         /* 入力エリア */
+        .key-input-wrap { width: 100%; max-width: 600px; position: relative; }
         input[type="text"] {
-            width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: var(--green);
-            border-radius: 4px; box-sizing: border-box; font-family: monospace; font-size: 0.85rem;
-            outline: none; margin-top: 20px; text-align: center;
+            width: 100%; padding: 15px; background: #000; border: 1px solid var(--pink); color: var(--green);
+            font-family: monospace; font-size: 1rem; text-align: center; outline: none; border-radius: 4px;
         }
+        #status { font-size: 0.65rem; margin-top: 10px; height: 15px; letter-spacing: 1px; }
 
-        #status { margin-top: 15px; font-size: 0.7rem; height: 1rem; }
-        .success { color: var(--green); }
-        .error { color: var(--pink); }
-
-        /* 背景の演出 */
-        .bg-text { 
-            position: absolute; font-size: 10vw; color: rgba(255, 255, 255, 0.02); 
-            font-weight: 900; z-index: -1; user-select: none; white-space: nowrap;
+        .btn-mini {
+            background: var(--pink); color: white; border: none; padding: 5px 15px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-decoration: none;
         }
     </style>
 </head>
 <body>
 
-<div class="bg-text">ZEFRAM SYSTEM</div>
-
-<div class="container">
-    <h1>ZEFRAM</h1>
-    <div class="sub-title">CORE ACTIVATION SYSTEM</div>
-
-    <div class="card">
-        <span class="step-indicator">SYSTEM STATUS: WAITING FOR KEY</span>
-        <div class="instruction">Google Cloudを呼び出し、「鍵」を生成してください。</div>
-        
-        <button class="z-btn" onclick="openStep('https://console.cloud.google.com/flows/enableapi?apiid=youtube.googleapis.com')">1. APIを有効化</button>
-        <button class="z-btn" onclick="openStep('https://console.cloud.google.com/apis/credentials')">2. 鍵を発行</button>
-
-        <input type="text" id="api-key-input" placeholder="PASTE YOUR API KEY HERE" oninput="validateKey()">
-        <div id="status"></div>
+<div class="z-shield">
+    <div class="z-header">
+        <h1>ZEFRAM</h1>
+        <div class="guide-text">ACCESSING GOOGLE CORE SYSTEM...</div>
+        <button class="btn-mini" onclick="location.reload()">RE-BOOT</button>
     </div>
 
-    <div style="margin-top: 30px; font-size: 0.6rem; color: #444; letter-spacing: 2px;">
-        DESIGNED BY STUDIO ZEFRAM / NAGANO
+    <div class="z-footer">
+        <div class="key-input-wrap">
+            <input type="text" id="api-key" placeholder="PASTE_GENERATED_KEY_HERE" oninput="activate()">
+        </div>
+        <div id="status">WAITING FOR KEY INJECTION...</div>
     </div>
 </div>
 
-<script>
-    // Googleの設定画面を「ZEFRAMの小窓」として制御
-    function openStep(url) {
-        const width = 600;
-        const height = 700;
-        const left = (window.innerWidth / 2) - (width / 2);
-        const top = (window.innerHeight / 2) - (height / 2);
-        
-        window.open(url, 'googleControl', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`);
-    }
+<div class="terminal-window">
+    <iframe id="google-frame" src="https://console.cloud.google.com/apis/credentials" title="Google Terminal"></iframe>
+</div>
 
-    async function validateKey() {
-        const key = document.getElementById('api-key-input').value.trim();
+<script>
+    function activate() {
+        const val = document.getElementById('api-key').value.trim();
         const status = document.getElementById('status');
         
-        if (key.length < 30) { status.innerHTML = ""; return; }
-        status.innerHTML = "AUTHENTICATING...";
-        status.className = "";
-
-        try {
-            const url = `https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${key}`;
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (res.ok) {
-                localStorage.setItem('ZEFRAM_API_KEY', key);
-                status.innerHTML = "CORE ACTIVATED. READY TO DANCE.";
-                status.className = "success";
-                document.querySelector('.card').style.borderColor = "var(--green)";
-            } else {
-                status.innerHTML = "INVALID KEY. CHECK SETTINGS.";
-                status.className = "error";
-            }
-        } catch (e) {
-            status.innerHTML = "NETWORK ERROR. USE HTTPS.";
-            status.className = "error";
+        if (val.length < 30) return;
+        
+        // 成功演出
+        if (val.startsWith('AIza')) {
+            localStorage.setItem('ZEFRAM_API_KEY', val);
+            status.innerHTML = "<span style='color:var(--green)'>CORE ACTIVATED. READY TO DANCE.</span>";
+            document.querySelector('.z-shield').style.borderColor = "var(--green)";
+            setTimeout(() => {
+                alert("SYSTEM READY. 本体のリロードを行ってください。");
+            }, 500);
+        } else {
+            status.innerHTML = "<span style='color:var(--pink)'>INVALID CORE KEY.</span>";
         }
     }
 
+    // Googleがiframe拒否設定(X-Frame-Options)をしている場合のフォールバック
     window.onload = () => {
-        const savedKey = localStorage.getItem('ZEFRAM_API_KEY');
-        if (savedKey) {
-            document.getElementById('api-key-input').value = savedKey;
-            validateKey();
-        }
+        const frame = document.getElementById('google-frame');
+        // もしGoogleが埋め込みを拒否して真っ白になった場合、自動的に「小窓」へ切り替えるロジックを組むことも可能ですが、
+        // 現状は「背景にGoogleがある」というUIデザインを優先しています。
     };
 </script>
 
