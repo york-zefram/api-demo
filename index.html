@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZEFRAM API SETUP</title>
+    <style>
+        :root { --pink: #ff007f; --black: #050505; --gray: #1a1a1a; --green: #00ff88; }
+        html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; line-height: 1.6; }
+        .container { max-width: 500px; margin: 0 auto; padding: 40px 20px; }
+        
+        h1 { font-size: 1.2rem; color: var(--pink); border-bottom: 1px solid var(--pink); padding-bottom: 10px; letter-spacing: 2px; }
+        p { font-size: 0.85rem; color: #ccc; margin-bottom: 30px; }
+
+        .step { background: var(--gray); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #333; }
+        .step.active { border-left-color: var(--pink); }
+        .step-num { font-size: 0.7rem; color: var(--pink); font-weight: bold; display: block; margin-bottom: 5px; }
+        .step-title { font-size: 0.95rem; font-weight: bold; display: block; margin-bottom: 15px; }
+
+        .btn { 
+            display: inline-block; background: transparent; color: var(--pink); border: 1px solid var(--pink);
+            padding: 10px 20px; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: bold;
+            cursor: pointer; transition: 0.3s; width: 100%; text-align: center; box-sizing: border-box;
+        }
+        .btn:hover { background: var(--pink); color: white; }
+
+        input[type="text"] {
+            width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: var(--green);
+            border-radius: 4px; box-sizing: border-box; font-family: monospace; font-size: 0.9rem; outline: none;
+        }
+
+        #test-result { margin-top: 10px; font-size: 0.75rem; min-height: 1.2rem; }
+        .success { color: var(--green); }
+        .error { color: #ff4444; }
+
+        .footer { margin-top: 40px; text-align: center; font-size: 0.7rem; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ZEFRAM SETUP WIZARD</h1>
+    <p>YouTube連携のための「鍵（API KEY）」を取得・設定します。以下の手順に従ってください。</p>
+
+    <div class="step active">
+        <span class="step-num">STEP 1</span>
+        <span class="step-title">Google Cloud プロジェクトを作成する</span>
+        <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="btn">プロジェクト作成画面を開く</a>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 2</span>
+        <span class="step-title">YouTube Data API v3 を有効にする</span>
+        <p style="font-size: 0.7rem;">※作成したプロジェクトを選択した状態で「有効にする」を押してください。</p>
+        <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" class="btn">API有効化画面を開く</a>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 3</span>
+        <span class="step-title">認証情報からAPIキーを発行・入力</span>
+        <input type="text" id="api-key-input" placeholder="AIza..." oninput="testAndSaveKey()">
+        <div id="test-result"></div>
+    </div>
+
+    <div class="footer">
+        ZEFRAM PLAYER SYSTEM v1.0<br>
+        キーはブラウザのLocalStorageに安全に保存されます。
+    </div>
+</div>
+
+<script>
+    async function testAndSaveKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        const resultDiv = document.getElementById('test-result');
+        
+        if (key.length < 30) {
+            resultDiv.innerHTML = "";
+            return;
+        }
+
+        resultDiv.innerHTML = "TESTING...";
+        resultDiv.className = "";
+
+        try {
+            // 実際に1件検索してテスト（YouTube Topicでテスト）
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=music&maxResults=1&key=${key}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.error) {
+                resultDiv.innerHTML = "ERROR: " + data.error.message;
+                resultDiv.className = "error";
+            } else {
+                // 成功：LocalStorageに保存
+                localStorage.setItem('ZEFRAM_API_KEY', key);
+                resultDiv.innerHTML = "SUCCESS! 鍵が認証されました。本体を起動してください。";
+                resultDiv.className = "success";
+                
+                // 完了時の演出
+                document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                document.querySelector('.step:last-child').style.borderColor = "var(--green)";
+            }
+        } catch (e) {
+            resultDiv.innerHTML = "通信エラーが発生しました。";
+            resultDiv.className = "error";
+        }
+    }
+
+    // 既存のキーがあれば表示
+    window.onload = () => {
+        const savedKey = localStorage.getItem('ZEFRAM_API_KEY');
+        if (savedKey) {
+            document.getElementById('api-key-input').value = savedKey;
+            testAndSaveKey();
+        }
+    };
+</script>
+
+</body>
+</html>
