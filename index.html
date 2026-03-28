@@ -8,31 +8,18 @@
         :root { --pink: #ff007f; --black: #050505; --gray: #1a1a1a; --green: #00ff88; }
         html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; line-height: 1.6; }
         .container { max-width: 500px; margin: 0 auto; padding: 40px 20px; }
-        
         h1 { font-size: 1.2rem; color: var(--pink); border-bottom: 1px solid var(--pink); padding-bottom: 10px; letter-spacing: 2px; }
         p { font-size: 0.85rem; color: #ccc; margin-bottom: 30px; }
-
         .step { background: var(--gray); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #333; }
         .step.active { border-left-color: var(--pink); }
         .step-num { font-size: 0.7rem; color: var(--pink); font-weight: bold; display: block; margin-bottom: 5px; }
         .step-title { font-size: 0.95rem; font-weight: bold; display: block; margin-bottom: 15px; }
-
-        .btn { 
-            display: inline-block; background: transparent; color: var(--pink); border: 1px solid var(--pink);
-            padding: 10px 20px; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: bold;
-            cursor: pointer; transition: 0.3s; width: 100%; text-align: center; box-sizing: border-box;
-        }
+        .btn { display: inline-block; background: transparent; color: var(--pink); border: 1px solid var(--pink); padding: 10px 20px; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; text-align: center; box-sizing: border-box; }
         .btn:hover { background: var(--pink); color: white; }
-
-        input[type="text"] {
-            width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: var(--green);
-            border-radius: 4px; box-sizing: border-box; font-family: monospace; font-size: 0.9rem; outline: none;
-        }
-
+        input[type="text"] { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: var(--green); border-radius: 4px; box-sizing: border-box; font-family: monospace; font-size: 0.9rem; outline: none; }
         #test-result { margin-top: 10px; font-size: 0.75rem; min-height: 1.2rem; }
-        .success { color: var(--green); }
+        .success { color: var(--green); font-weight: bold; }
         .error { color: #ff4444; }
-
         .footer { margin-top: 40px; text-align: center; font-size: 0.7rem; color: #666; }
     </style>
 </head>
@@ -40,7 +27,7 @@
 
 <div class="container">
     <h1>ZEFRAM SETUP WIZARD</h1>
-    <p>YouTube連携のための「鍵（API KEY）」を取得・設定します。以下の手順に従ってください。</p>
+    <p>YouTube連携のための「鍵（API KEY）」を取得・設定します。</p>
 
     <div class="step active">
         <span class="step-num">STEP 1</span>
@@ -51,7 +38,6 @@
     <div class="step">
         <span class="step-num">STEP 2</span>
         <span class="step-title">YouTube Data API v3 を有効にする</span>
-        <p style="font-size: 0.7rem;">※作成したプロジェクトを選択した状態で「有効にする」を押してください。</p>
         <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" class="btn">API有効化画面を開く</a>
     </div>
 
@@ -63,8 +49,8 @@
     </div>
 
     <div class="footer">
-        ZEFRAM PLAYER SYSTEM v1.0<br>
-        キーはブラウザのLocalStorageに安全に保存されます。
+        ZEFRAM PLAYER SYSTEM v1.1<br>
+        鍵はブラウザ(LocalStorage)に保存されます。
     </div>
 </div>
 
@@ -78,35 +64,38 @@
             return;
         }
 
-        resultDiv.innerHTML = "TESTING...";
+        resultDiv.innerHTML = "認証テスト中...";
         resultDiv.className = "";
 
         try {
-            // 実際に1件検索してテスト（YouTube Topicでテスト）
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=music&maxResults=1&key=${key}`;
+            // 検索(Search)より制限が緩く、確実に通る「動画カテゴリ取得」で認証チェック
+            const url = `https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${key}`;
+            
             const res = await fetch(url);
             const data = await res.json();
 
-            if (data.error) {
-                resultDiv.innerHTML = "ERROR: " + data.error.message;
-                resultDiv.className = "error";
-            } else {
-                // 成功：LocalStorageに保存
+            if (res.ok) {
+                // 成功：LocalStorageに保存（本体アプリと同じドメインである必要があります）
                 localStorage.setItem('ZEFRAM_API_KEY', key);
-                resultDiv.innerHTML = "SUCCESS! 鍵が認証されました。本体を起動してください。";
+                resultDiv.innerHTML = "SUCCESS! 鍵が認証・保存されました。本体を起動してください。";
                 resultDiv.className = "success";
                 
-                // 完了時の演出
                 document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-                document.querySelector('.step:last-child').style.borderColor = "var(--green)";
+                document.getElementById('api-key-input').style.borderColor = "var(--green)";
+            } else {
+                // Googleからのエラー内容を表示
+                const msg = data.error ? data.error.message : "認証に失敗しました";
+                resultDiv.innerHTML = "ERROR: " + msg;
+                resultDiv.className = "error";
             }
         } catch (e) {
-            resultDiv.innerHTML = "通信エラーが発生しました。";
+            // 通信そのものが遮断されている場合（file:///での実行など）
+            resultDiv.innerHTML = "通信エラー: HTTPS(GitHub Pages)環境で実行してください。";
             resultDiv.className = "error";
+            console.error(e);
         }
     }
 
-    // 既存のキーがあれば表示
     window.onload = () => {
         const savedKey = localStorage.getItem('ZEFRAM_API_KEY');
         if (savedKey) {
