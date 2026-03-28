@@ -6,97 +6,86 @@
     <title>ZEFRAM CORE ACTIVATOR</title>
     <style>
         :root { --pink: #ff007f; --black: #050505; --green: #00ff88; }
-        html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        html, body { margin: 0; background: var(--black); color: white; font-family: sans-serif; height: 100vh; display: flex; justify-content: center; align-items: center; }
 
-        /* メインUI */
-        .z-interface {
-            position: relative; height: 100vh; display: flex; flex-direction: column;
-            border: 2px solid var(--pink); box-sizing: border-box; z-index: 10;
+        .z-panel {
+            width: 90%; max-width: 400px; padding: 40px 20px; border: 1px solid var(--pink);
+            background: rgba(10, 10, 10, 0.8); text-align: center; box-shadow: 0 0 30px rgba(255, 0, 127, 0.2);
         }
 
-        .z-header { padding: 20px; background: rgba(5,5,5,0.9); border-bottom: 1px solid var(--pink); text-align: center; }
-        .z-main { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
-        .z-footer { padding: 30px; background: rgba(5,5,5,0.9); border-top: 1px solid var(--pink); }
+        h1 { font-size: 1.5rem; color: var(--pink); letter-spacing: 6px; margin-bottom: 5px; }
+        .sub { font-size: 0.65rem; color: #666; letter-spacing: 2px; margin-bottom: 40px; }
 
-        h1 { font-size: 1.2rem; color: var(--pink); letter-spacing: 5px; margin: 0; text-transform: uppercase; }
-        .status-msg { font-size: 0.7rem; color: #666; margin-top: 5px; letter-spacing: 2px; }
-
-        /* ボタンと入力 */
         .z-btn {
             background: transparent; color: var(--pink); border: 1px solid var(--pink);
-            padding: 15px 30px; font-weight: bold; cursor: pointer; font-size: 0.8rem;
-            transition: 0.3s; width: 100%; max-width: 300px; margin-bottom: 10px;
+            padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.8rem;
+            transition: 0.2s; letter-spacing: 1px;
         }
-        .z-btn:hover { background: var(--pink); color: white; box-shadow: 0 0 20px rgba(255,0,127,0.4); }
+        .z-btn:hover { background: var(--pink); color: white; }
 
-        .key-input {
-            width: 100%; max-width: 400px; padding: 12px; background: #000; border: 1px solid var(--green);
-            color: var(--green); font-family: monospace; text-align: center; outline: none; margin-top: 20px;
+        .input-area { margin-top: 40px; }
+        input[type="text"] {
+            width: 100%; padding: 12px; background: #000; border: 1px solid #333;
+            color: var(--green); font-family: monospace; text-align: center; outline: none; box-sizing: border-box;
         }
+        input[type="text"]:focus { border-color: var(--pink); }
 
-        .guide-step { font-size: 0.75rem; color: #ccc; margin-bottom: 20px; text-align: center; line-height: 1.8; }
-        .highlight { color: var(--pink); font-weight: bold; }
+        #status { font-size: 0.65rem; margin-top: 15px; height: 1.2rem; letter-spacing: 1px; }
+        .success { color: var(--green); }
+        
+        .hint { font-size: 0.7rem; color: #444; margin-top: 40px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
-<div class="z-interface">
-    <div class="z-header">
-        <h1>ZEFRAM CORE</h1>
-        <div class="status-msg">LINKING TO EXTERNAL TERMINAL...</div>
+<div class="z-panel">
+    <h1>ZEFRAM</h1>
+    <div class="sub">CORE SETUP TERMINAL</div>
+
+    <button class="z-btn" onclick="openGoogle()">OPEN GOOGLE TERMINAL</button>
+
+    <div class="input-area">
+        <input type="text" id="api-key" placeholder="PASTE CORE KEY" oninput="checkKey()">
+        <div id="status">AWAITING KEY INJECTION...</div>
     </div>
 
-    <div class="z-main">
-        <div class="guide-step">
-            1. [TERMINAL] ボタンでGoogle Cloudを起動<br>
-            2. <span class="highlight">認証情報を作成</span> ＞ <span class="highlight">APIキー</span> を選択<br>
-            3. 生成されたコードを下の入力欄へ注入してください
-        </div>
-        
-        <button class="z-btn" onclick="openTerminal()">OPEN EXTERNAL TERMINAL</button>
-        
-        <input type="text" id="api-key" class="key-input" placeholder="PASTE CORE KEY HERE" oninput="checkKey()">
-    </div>
-
-    <div class="z-footer">
-        <div id="result-display" style="text-align: center; font-size: 0.75rem; letter-spacing: 1px;">
-            AWAITING KEY INJECTION...
-        </div>
+    <div class="hint">
+        [1] ターミナルを開き API KEY を発行<br>
+        [2] 生成されたコードをここに注入
     </div>
 </div>
 
 <script>
-    function openTerminal() {
-        const url = 'https://console.cloud.google.com/apis/credentials';
-        // 画面の右半分にGoogleを配置し、左半分にZEFRAMを残すようなサイズ指定
-        const w = 800;
-        const h = window.innerHeight - 100;
-        const left = window.screen.width - w;
-        const top = 50;
+    function openGoogle() {
+        const w = 700;
+        const h = 800;
+        const left = (window.screen.width / 2) - (w / 2);
+        const top = (window.screen.height / 2) - (h / 2);
         
-        window.open(url, 'zefram_terminal', `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`);
+        // 画面中央に「ポップアップ」としてGoogleを召喚
+        window.open('https://console.cloud.google.com/apis/credentials', 'z_terminal', 
+            `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`);
     }
 
     async function checkKey() {
         const val = document.getElementById('api-key').value.trim();
-        const display = document.getElementById('result-display');
-
+        const status = document.getElementById('status');
         if (val.length < 30) return;
 
-        display.innerHTML = "VALIDATING CORE...";
+        status.innerHTML = "VALIDATING...";
 
         try {
             const url = `https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${val}`;
             const res = await fetch(url);
             if (res.ok) {
                 localStorage.setItem('ZEFRAM_API_KEY', val);
-                display.innerHTML = "<span style='color:var(--green)'>CORE ACTIVATED. READY TO DANCE.</span>";
-                document.querySelector('.z-interface').style.borderColor = "var(--green)";
+                status.innerHTML = "<span class='success'>CORE ACTIVATED. READY.</span>";
+                document.querySelector('.z-panel').style.borderColor = "var(--green)";
             } else {
-                display.innerHTML = "<span style='color:var(--pink)'>INVALID KEY. RETRY.</span>";
+                status.innerHTML = "INVALID KEY.";
             }
         } catch (e) {
-            display.innerHTML = "CONNECTION ERROR.";
+            status.innerHTML = "CONNECTION ERROR.";
         }
     }
 </script>
